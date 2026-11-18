@@ -1,0 +1,7 @@
+Estado de validación del código
+
+La suite local contiene 12 pruebas y todas pasan en Python 3.12.14. Las pruebas comprueban persistencia SQLite, rollback conjunto del pedido y evento, idempotencia bajo concurrencia, reintentos con un publicador simulado, fallos de notificación, comunicación HTTP local y cálculos del análisis.
+
+El entorno de preparación no dispone de Docker ni k6. Por ello, la integración con RabbitMQ real, la construcción de imágenes, el formato efectivo de salida de k6, la inyección de fallos en contenedores y la campaña de carga permanecen pendientes de verificación en el equipo de aplicación. Las comprobaciones locales no se presentan como validación del rendimiento ni como resultados de la investigación.
+
+El README describe la prueba corta de cada prototipo y los límites de interpretación. No se incluyen cifras de benchmark predefinidas. La implementación corresponde a un prototipo inicial verificable, no a un sistema de producción ni a una Saga completa.

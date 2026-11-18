@@ -1,0 +1,64 @@
+name: minv-laboratorio
+x-app: &app
+  build: .
+  cpus: 1.0
+  mem_limit: 256m
+  restart: "no"
+services:
+  inventory-direct:
+    <<: *app
+    environment:
+      ROLE: inventory
+      MODE: direct
+    volumes: [inventory-direct:/data]
+    ports: ["127.0.0.1:8101:8000"]
+  orders-direct:
+    <<: *app
+    environment:
+      ROLE: orders
+      MODE: direct
+      INVENTORY_URL: http://inventory-direct:8000
+    volumes: [orders-direct:/data]
+    ports: ["127.0.0.1:8001:8000"]
+    depends_on: [inventory-direct]
+  rabbit:
+    image: rabbitmq:4.1-management
+    environment:
+      RABBITMQ_DEFAULT_USER: minv
+      RABBITMQ_DEFAULT_PASS: laboratorio-local
+    volumes: [rabbit:/var/lib/rabbitmq]
+    cpus: 1.0
+    mem_limit: 512m
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+  orders-outbox:
+    <<: *app
+    environment:
+      ROLE: orders
+      MODE: outbox
+      AMQP_URL: amqp://minv:laboratorio-local@rabbit:5672/%2F
+    volumes: [orders-outbox:/data]
+    ports: ["127.0.0.1:8002:8000"]
+    depends_on:
+      rabbit: {condition: service_healthy}
+  inventory-outbox:
+    <<: *app
+    environment:
+      ROLE: inventory
+      MODE: outbox
+      AMQP_URL: amqp://minv:laboratorio-local@rabbit:5672/%2F
+      ORDERS_URL: http://orders-outbox:8000
+    volumes: [inventory-outbox:/data]
+    ports: ["127.0.0.1:8102:8000"]
+    depends_on:
+      orders-outbox: {condition: service_started}
+      rabbit: {condition: service_healthy}
+volumes:
+  inventory-direct:
+  orders-direct:
+  inventory-outbox:
+  orders-outbox:
+  rabbit:
